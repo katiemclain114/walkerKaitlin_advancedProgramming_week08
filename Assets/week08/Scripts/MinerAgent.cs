@@ -21,6 +21,8 @@ public class MinerAgent : Agent
 	Color dashColor;
 	[SerializeField]
 	Color stunColor;
+	[SerializeField] 
+	private Color shieldColor;
 	[SerializeField]
 	Renderer cubeRenderer;
 	[SerializeField]
@@ -46,6 +48,10 @@ public class MinerAgent : Agent
 
 	int teamID = -1;
 	int teamID_Opponent = -1;
+
+	private int shieldGoal = 2;
+	private int goldPickupAmt = 0;
+	private bool shieldEarned = false;
 
 	public override void Initialize()
 	{
@@ -238,7 +244,7 @@ public class MinerAgent : Agent
 					stunningTimer = 0;
 					currentAgentState = AgentState.Normal;
 					gameObject.tag = originalTag;
-					cubeRenderer.material.SetColor("_Color", originalColor);
+					cubeRenderer.material.SetColor("_Color", shieldEarned ? shieldColor : originalColor);
 				}
 			}
 		}
@@ -258,7 +264,7 @@ public class MinerAgent : Agent
 				dashingTimer = 0;
 				dashCDTimer = dashCDTimerTotal;
 				currentAgentState = AgentState.Normal;
-				cubeRenderer.material.SetColor("_Color", originalColor);
+				cubeRenderer.material.SetColor("_Color", shieldEarned ? shieldColor : originalColor);
 			}
 		}
 	}
@@ -276,6 +282,17 @@ public class MinerAgent : Agent
 		gameGroup.event_GoalScored.Invoke(teamID);
 
 		gameGroup.DestroyGold(other.gameObject.transform);
+
+		if (shieldEarned) return;
+		if (goldPickupAmt < shieldGoal)
+		{
+			goldPickupAmt++;
+		}
+		else
+		{
+			shieldEarned = true;
+			cubeRenderer.material.SetColor("_Color", shieldColor);
+		}
 	}
 	private void OnCollisionStay(Collision other)
 	{
@@ -296,6 +313,7 @@ public class MinerAgent : Agent
 
 	public bool HitCheck()
 	{
+		if (shieldEarned) return false;
 		if (currentAgentState != AgentState.Dashing && currentAgentState != AgentState.Stunning)
 		{
 			currentAgentState = AgentState.Stunning;
